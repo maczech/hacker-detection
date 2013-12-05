@@ -21,7 +21,7 @@ public class UserLoginAttemptFactoryTest {
     }
 
     @Test(expected=IllegalArgumentException.class)
-    public void shouldThrowExceptionWhenMissingField() {
+    public void shouldThrowExceptionWhenFieldIsMissing() {
         String logLine = "80.238.9.179,133612947,SIGNIN_SUCCESS";
         objectUnderTest.create(logLine);
     }
@@ -38,7 +38,7 @@ public class UserLoginAttemptFactoryTest {
     }
 
     @Test(expected=IllegalStateException.class)
-    public void shouldThrowExceptionWhenTimestampIsNotLong() {
+    public void shouldThrowExceptionWhenTimestampIsNotALong() {
         String logLine = "80.238.9.179,NOT_LONG,SIGNIN_SUCCESS,Dave.Branning";
         objectUnderTest.create(logLine);
     }

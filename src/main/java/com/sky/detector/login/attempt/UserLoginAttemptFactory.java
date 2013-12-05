@@ -3,6 +3,7 @@ package com.sky.detector.login.attempt;
 import java.text.MessageFormat;
 
 public class UserLoginAttemptFactory {
+
     public UserLoginAttempt create(String logLine) {
         if (logLine == null) {
             throw new IllegalArgumentException("Log line cannot be null");

@@ -12,13 +12,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.sky.detector.login.attempt.UserLoginAttempt;
 import com.sky.detector.login.attempt.UserLoginAttemptFactory;
 import com.sky.detector.policies.HackerDetectorPolicy;
 import com.sky.detector.policies.HackerDetectorResult;
+import com.sky.detector.sample.UserLoginAttemptSample;
 
 public class HackerDetectorTest {
     @Mock
@@ -38,8 +38,8 @@ public class HackerDetectorTest {
     @Test
     public void shouldReturnNullWhenNotDetected() {
         String logLine = "80.238.9.179,133612947,SIGNIN_SUCCESS,Dave.Branning";
-        UserLoginAttempt emptyAttempt = new UserLoginAttempt();
-        when(userLoginFactory.create(logLine)).thenReturn(emptyAttempt);
+        UserLoginAttempt loginAttempt = new UserLoginAttemptSample().build();
+        when(userLoginFactory.create(logLine)).thenReturn(loginAttempt);
 
         Iterator<HackerDetectorPolicy> mockIter = mock(Iterator.class);
 
@@ -48,7 +48,7 @@ public class HackerDetectorTest {
         when(mockIter.next()).thenReturn(policy);
         HackerDetectorResult detectorResult = new HackerDetectorResult();
         detectorResult.setSucessfull(false);
-        when(policy.detect(emptyAttempt)).thenReturn(detectorResult);
+        when(policy.detect(loginAttempt)).thenReturn(detectorResult);
 
         String result = objectUnderTest.parseLine(logLine);
 
@@ -56,14 +56,13 @@ public class HackerDetectorTest {
     }
 
     @Test
-    public void shouldReturnIpWhenDetectedWhenNotDetected() {
+    public void shouldReturnIpAddressWhenDetectedWhenDetected() {
         String logLine = "80.238.9.179,133612947,SIGNIN_SUCCESS,Dave.Branning";
-        UserLoginAttempt loginAttempt = new UserLoginAttempt();
-        loginAttempt.setIpAddress("80.238.9.179");
+        UserLoginAttempt loginAttempt = new UserLoginAttemptSample().build();
 
         when(userLoginFactory.create(logLine)).thenReturn(loginAttempt);
 
-        Iterator<HackerDetectorPolicy> mockIter = Mockito.mock(Iterator.class);
+        Iterator<HackerDetectorPolicy> mockIter = mock(Iterator.class);
 
         when(policies.iterator()).thenReturn(mockIter);
         when(mockIter.hasNext()).thenReturn(true).thenReturn(false);

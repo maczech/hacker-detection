@@ -115,15 +115,55 @@ public class UserLoginAttemptCountPolicyTest {
 
         objectUnderTest.detect(loginAttempt);
 
-        loginAttempt = new UserLoginAttemptSample()
-        .withAction(UserLoginAttempt.Action.SIGNIN_FAILURE)
-        .build();
+        loginAttempt = new UserLoginAttemptSample().withAction(
+                UserLoginAttempt.Action.SIGNIN_FAILURE).build();
 
         objectUnderTest.detect(loginAttempt);
-        Assert.assertEquals(2, objectUnderTest.userLoginAttempts.get(loginAttempt.getIpAddress()).size());
+        Assert.assertEquals(2, objectUnderTest.userLoginAttempts.get(loginAttempt.getIpAddress())
+                .size());
 
         objectUnderTest.cleanup();
-        Assert.assertEquals(1, objectUnderTest.userLoginAttempts.get(loginAttempt.getIpAddress()).size());
+        Assert.assertEquals(1, objectUnderTest.userLoginAttempts.get(loginAttempt.getIpAddress())
+                .size());
+    }
+
+    @Test
+    public void shouldRemoveDuringDetectWhenAllOlderThanPeriod() {
+        UserLoginAttempt loginAttempt = new UserLoginAttemptSample()
+                .withAction(UserLoginAttempt.Action.SIGNIN_FAILURE).withTimestamp(1336129471L)
+                .build();
+
+        objectUnderTest.detect(loginAttempt);
+        objectUnderTest.detect(loginAttempt);
+        objectUnderTest.detect(loginAttempt);
+        objectUnderTest.detect(loginAttempt);
+
+        loginAttempt = new UserLoginAttemptSample().withAction(
+                UserLoginAttempt.Action.SIGNIN_FAILURE).build();
+
+        objectUnderTest.detect(loginAttempt);
+        Assert.assertEquals(1, objectUnderTest.userLoginAttempts.get(loginAttempt.getIpAddress())
+                .size());
+    }
+
+    @Test
+    public void shouldRemoveDuringDetectOlderThanPeriod() {
+        UserLoginAttempt loginAttempt = new UserLoginAttemptSample()
+                .withAction(UserLoginAttempt.Action.SIGNIN_FAILURE).withTimestamp(1336129471L)
+                .build();
+
+        objectUnderTest.detect(loginAttempt);
+
+        loginAttempt = new UserLoginAttemptSample().withAction(
+                UserLoginAttempt.Action.SIGNIN_FAILURE).build();
+
+        objectUnderTest.detect(loginAttempt);
+        objectUnderTest.detect(loginAttempt);
+        objectUnderTest.detect(loginAttempt);
+        objectUnderTest.detect(loginAttempt);
+        Assert.assertEquals(4, objectUnderTest.userLoginAttempts.get(loginAttempt.getIpAddress())
+                .size());
+
     }
 
 }

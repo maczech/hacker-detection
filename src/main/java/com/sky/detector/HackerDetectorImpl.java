@@ -9,14 +9,15 @@ import com.sky.detector.policies.HackerDetectorResult;
 
 public class HackerDetectorImpl implements HackerDetector {
 
-    private UserLoginAttemptFactory userLoginFactory;
-    private List<HackerDetectorPolicy> policies;
+    protected UserLoginAttemptFactory userLoginFactory;
+    protected List<HackerDetectorPolicy> policies;
 
+    @Override
     public String parseLine(String line) {
         UserLoginAttempt userLogin = userLoginFactory.create(line);
-        for(HackerDetectorPolicy policy : policies) {
+        for (HackerDetectorPolicy policy : policies) {
             HackerDetectorResult result = policy.detect(userLogin);
-            if(result.isSucessfull()) {
+            if (result.isSucessfull()) {
                 return userLogin.getIpAddress();
             }
         }
@@ -39,7 +40,5 @@ public class HackerDetectorImpl implements HackerDetector {
     public void setPolicies(List<HackerDetectorPolicy> policies) {
         this.policies = policies;
     }
-
-
 
 }

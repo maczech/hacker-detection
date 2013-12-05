@@ -3,24 +3,24 @@ package com.sky.detector.policies;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.sky.detector.login.attempt.UserLoginAttempt;
 
 public class UserLoginAttemptCountPolicy implements HackerDetectorPolicy {
 
     private static final String MAXIMUM_NUMBER_OF_LOGIN_ATTEMPS_REACHED_MESSAGE = "Reached maximum number of login attempts during {0} minutes.";
-    protected final Map<String, List<UserLoginAttempt>> userLoginAttempts = new ConcurrentHashMap<String, List<UserLoginAttempt>>();
+
+    protected final Map<String, List<UserLoginAttempt>> userLoginAttempts = new HashMap<>();
     protected Integer maximumNumberOfLoginAttempts;
     protected Integer periodOfTimeInMinutes;
     protected Timer timer;
     protected Integer cleanupTimeInMiliseconds;
-
 
     @Override
     public synchronized HackerDetectorResult detect(UserLoginAttempt userLogin) {
@@ -46,6 +46,9 @@ public class UserLoginAttemptCountPolicy implements HackerDetectorPolicy {
 
         UserLoginAttempt lastAttempt = attemptsList.get(attemptsList.size() - 1);
         if (lastAttempt.getTimestamp().longValue() < periodToCheck.longValue()) {
+            // Cache maintenance, if all elements are older than period clear
+            // entry
+            attemptsList.clear();
             attemptsList.add(userLogin);
             result.setSucessfull(false);
             return result;
@@ -53,9 +56,13 @@ public class UserLoginAttemptCountPolicy implements HackerDetectorPolicy {
 
         int attemptsCount = 0;
         attemptsList.add(userLogin);
-        for (UserLoginAttempt attempt : attemptsList) {
+        for (Iterator<UserLoginAttempt> iter = attemptsList.iterator(); iter.hasNext();) {
+            UserLoginAttempt attempt = iter.next();
             if (attempt.getTimestamp() >= periodToCheck) {
                 attemptsCount++;
+            } else {
+                // Cache maintenance, remove if element older than period
+                iter.remove();
             }
             if (attemptsCount >= maximumNumberOfLoginAttempts) {
                 result.setSucessfull(true);
@@ -73,7 +80,7 @@ public class UserLoginAttemptCountPolicy implements HackerDetectorPolicy {
 
             @Override
             public void run() {
-               cleanup();
+                cleanup();
 
             }
         };
@@ -81,10 +88,10 @@ public class UserLoginAttemptCountPolicy implements HackerDetectorPolicy {
 
     }
 
-    protected synchronized void cleanup() {
+    public synchronized void cleanup() {
         Long periodToCheck = getPeriodToCheck();
         for (Map.Entry<String, List<UserLoginAttempt>> entry : userLoginAttempts.entrySet()) {
-            for (Iterator<UserLoginAttempt> iter = entry.getValue().iterator();iter.hasNext();) {
+            for (Iterator<UserLoginAttempt> iter = entry.getValue().iterator(); iter.hasNext();) {
                 UserLoginAttempt attempt = iter.next();
                 if (attempt.getTimestamp() < periodToCheck) {
                     iter.remove();
@@ -132,9 +139,4 @@ public class UserLoginAttemptCountPolicy implements HackerDetectorPolicy {
     public void setCleanupTimeInMiliseconds(Integer cleanupTimeInMiliseconds) {
         this.cleanupTimeInMiliseconds = cleanupTimeInMiliseconds;
     }
-
-
-
-
-
 }
